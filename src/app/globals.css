@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Neutral dark chrome: the user's colors must never be judged against a tinted surround. */
+  --background: #111113;
+  --surface: #19191c;
+  --surface-2: #212125;
+  --border-subtle: #2a2a2f;
+  --foreground: #f0f0f2;
+  --muted: #91919b;
+  /* Adopts the current working color at runtime — the app wears your color. */
+  --accent: #5ba9f7;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-edge: var(--border-subtle);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Neutral checker under swatches so translucency is actually visible. */
+.checkerboard {
+  background-color: #ffffff;
+  background-image: conic-gradient(
+    #c9ced6 0 25%,
+    #ffffff 0 50%,
+    #c9ced6 0 75%,
+    #ffffff 0
+  );
+  background-size: 16px 16px;
+}
+
+/* Native range input laid over the alpha gradient track. */
+.alpha-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+
+.alpha-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--foreground);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+
+.alpha-slider::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--foreground);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+
+.alpha-slider:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
