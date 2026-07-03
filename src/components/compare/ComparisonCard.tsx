@@ -1,7 +1,6 @@
 "use client";
 
 import type { Color } from "culori";
-import { useState } from "react";
 import { BackdropToggle } from "@/components/BackdropToggle";
 import { ColorInput } from "@/components/ColorInput";
 import { FormatRow } from "@/components/FormatRow";
@@ -30,6 +29,9 @@ interface ComparisonCardProps {
   draft: string;
   error: string | null;
   color: Color | null;
+  /** Resolved backdrop: the card's override or the page-wide base toggle. */
+  backdrop: Backdrop;
+  onBackdropChange: (backdrop: Backdrop) => void;
   onDraftChange: (text: string) => void;
   onCommit: (color: Color, opts?: { debounceMs?: number }) => void;
   onRemove: () => void;
@@ -41,11 +43,12 @@ export function ComparisonCard({
   draft,
   error,
   color,
+  backdrop,
+  onBackdropChange,
   onDraftChange,
   onCommit,
   onRemove,
 }: ComparisonCardProps) {
-  const [backdrop, setBackdrop] = useState<Backdrop>("checker");
   // Metrics need a flat backdrop; the checkerboard is a visual device only.
   const metricBackdrop = backdrop === "black" ? BLACK : WHITE;
   const result = color ? compareColors(base, color, metricBackdrop) : null;
@@ -60,7 +63,7 @@ export function ComparisonCard({
           {String(index + 1).padStart(2, "0")}
         </span>
         <div className="flex items-center gap-2">
-          <BackdropToggle value={backdrop} onChange={setBackdrop} />
+          <BackdropToggle value={backdrop} onChange={onBackdropChange} />
           <button
             type="button"
             onClick={onRemove}
@@ -85,9 +88,19 @@ export function ComparisonCard({
       {color && result && (
         <div className={`transition-opacity ${error ? "opacity-40" : ""}`}>
           <div className="mt-4 flex gap-2">
-            <div className="flex h-14 flex-1 overflow-hidden rounded-lg border border-edge">
-              <Swatch css={toCss(base)} backdrop={backdrop} className="h-full flex-1" />
-              <Swatch css={toCss(color)} backdrop={backdrop} className="h-full flex-1" />
+            <div className="flex h-14 flex-1 gap-1 overflow-hidden rounded-lg">
+              <Swatch
+                css={toCss(base)}
+                backdrop={backdrop}
+                inset
+                className="h-full flex-1 rounded-lg border border-edge"
+              />
+              <Swatch
+                css={toCss(color)}
+                backdrop={backdrop}
+                inset
+                className="h-full flex-1 rounded-lg border border-edge"
+              />
             </div>
             <div
               className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-edge ${BACKDROP_CLASS[backdrop]}`}

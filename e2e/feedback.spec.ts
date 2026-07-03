@@ -70,4 +70,26 @@ test.describe("comparison feedback round", () => {
     await whiteButton.click();
     await expect(whiteButton).toHaveAttribute("aria-pressed", "true");
   });
+
+  test("base backdrop drives every card until a card overrides it", async ({
+    page,
+  }) => {
+    await page.goto("/compare?b=a9d6c5&c=00000080");
+    const baseSection = page.getByRole("region", { name: "Base color" });
+    const card = page.getByRole("article", { name: "Comparison 1" });
+    const contrast = card.locator("dd").nth(2);
+    const initial = await contrast.innerText();
+
+    // Page-wide: switching the base toggle recomputes the card.
+    await baseSection.getByRole("button", { name: "Black backdrop" }).click();
+    await expect(contrast).not.toHaveText(initial);
+    await expect(
+      card.getByRole("button", { name: "Black backdrop" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    // Per-card override still wins.
+    const afterBase = await contrast.innerText();
+    await card.getByRole("button", { name: "White backdrop" }).click();
+    await expect(contrast).not.toHaveText(afterBase);
+  });
 });

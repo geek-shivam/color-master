@@ -23,6 +23,8 @@ interface Slot {
   draft: string;
   color: Color | null;
   error: string | null;
+  /** Per-card backdrop override; null follows the base (page-wide) toggle. */
+  backdrop: Backdrop | null;
 }
 
 interface State {
@@ -45,6 +47,7 @@ const newSlot = (draft: string, color: Color | null): Slot => ({
   draft,
   color,
   error: null,
+  backdrop: null,
 });
 
 function makeDefaultState(): State {
@@ -188,6 +191,24 @@ export function ComparePanel() {
     syncUrl(base, nextSlots, opts?.debounceMs ?? 0);
   };
 
+  // The base toggle is the page-wide backdrop: it restyles the base band and
+  // resets every card to follow it. A card's own toggle overrides it for that
+  // card until the base toggle changes again.
+  const handleBaseBackdrop = (backdrop: Backdrop) => {
+    setBaseBackdrop(backdrop);
+    setState((prev) => ({
+      ...prev,
+      slots: prev.slots.map((s) => ({ ...s, backdrop: null })),
+    }));
+  };
+
+  const handleSlotBackdrop = (id: number, backdrop: Backdrop) => {
+    setState((prev) => ({
+      ...prev,
+      slots: prev.slots.map((s) => (s.id === id ? { ...s, backdrop } : s)),
+    }));
+  };
+
   const addSlot = () => {
     // Nothing committed yet, so the URL is untouched until the color parses.
     setState((prev) => ({ ...prev, slots: [...prev.slots, newSlot("", null)] }));
@@ -219,9 +240,10 @@ export function ComparePanel() {
               <Swatch
                 css={toCss(base)}
                 backdrop={baseBackdrop}
+                inset
                 className="h-16 min-w-0 flex-1 rounded-xl border border-edge"
               />
-              <BackdropToggle value={baseBackdrop} onChange={setBaseBackdrop} />
+              <BackdropToggle value={baseBackdrop} onChange={handleBaseBackdrop} />
             </div>
             <div className="mt-2 divide-y divide-edge border-b border-edge">
               {toAllFormats(base).map((f) => (
@@ -269,6 +291,8 @@ export function ComparePanel() {
                 draft={slot.draft}
                 error={slot.error}
                 color={slot.color}
+                backdrop={slot.backdrop ?? baseBackdrop}
+                onBackdropChange={(backdrop) => handleSlotBackdrop(slot.id, backdrop)}
                 onDraftChange={(text) => handleSlotDraft(slot.id, text)}
                 onCommit={(color, opts) => handleSlotCommit(slot.id, color, opts)}
                 onRemove={() => removeSlot(slot.id)}
@@ -280,11 +304,12 @@ export function ComparePanel() {
 
       <p className="mt-10 max-w-2xl text-xs leading-5 text-muted">
         Every metric is computed on flattened colors: the base and the
-        comparison are each composited over the card&apos;s selected backdrop
-        (the checkerboard counts as white), then compared — so alpha
-        differences show up in ΔE, OKLCH Δ and contrast. WCAG defines contrast
-        only for opaque colors. ΔE2000 below 2 is generally imperceptible;
-        contrast of 4.5:1 or higher passes AA for normal text.
+        comparison are each composited over the selected backdrop (the base
+        toggle sets it for the whole page, each card can override it, and the
+        checkerboard counts as white), then compared — so alpha differences
+        show up in ΔE, OKLCH Δ and contrast. WCAG defines contrast only for
+        opaque colors. ΔE2000 below 2 is generally imperceptible; contrast of
+        4.5:1 or higher passes AA for normal text.
       </p>
     </div>
   );
